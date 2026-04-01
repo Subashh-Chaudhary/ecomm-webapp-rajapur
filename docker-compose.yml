@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecomm-app
+    ports:
+      - "4000:4000"
+    volumes:
+      # Mount source code for hot-reloading
+      - .:/usr/src/app
+      # Create an anonymous volume for node_modules to avoid overriding it with host OS symlinks
+      - /usr/src/app/node_modules
+    env_file:
+      - .env
+    environment:
+      # Inject overriding database connection string based on the container network
+      - DATABASE_URL=postgresql://ecomm-user:ecomm%40dev123@db:5432/ecomm-webapp-rajapur
+    depends_on:
+      db:
+        condition: service_healthy
+    command: pnpm run start:dev
+
+  db:
+    image: postgres:15-alpine
+    container_name: ecomm-db
+    environment:
+      POSTGRES_USER: ecomm-user
+      POSTGRES_PASSWORD: ecomm@dev123
+      POSTGRES_DB: ecomm-webapp-rajapur
+    ports:
+      - "5432:5432"
+    volumes:
+      - ecomm-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecomm-user -d ecomm-webapp-rajapur"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ecomm-db-data:
