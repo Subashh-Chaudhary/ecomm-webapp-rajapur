@@ -14,5 +14,8 @@ RUN pnpm install
 # Copy the rest of the application files
 COPY . .
 
+# Generate Prisma client (requires dummy DATABASE_URL since env vars aren't available at build time)
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost/dummy" pnpm prisma generate
+
 # Start the application in development watch mode
 CMD ["pnpm", "run", "start:dev"]
